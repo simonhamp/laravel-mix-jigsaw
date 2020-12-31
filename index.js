@@ -1,7 +1,7 @@
 const mix = require('laravel-mix');
 
 const argv = require('yargs').argv;
-const command = require('node-cmd');
+const { exec } = require('child_process');
 const fs = require('fs');
 const hasbin = require('hasbin');
 const path = require('path');
@@ -86,8 +86,13 @@ class Jigsaw {
                 compiler.hooks.jigsawDone = new SyncHook([]);
 
                 compiler.hooks.done.tap('Jigsaw Webpack Plugin', () => {
-                    return command.get(`${bin} build -q ${env}`, (error, stdout, stderr) => {
-                        console.log(error ? stderr : stdout);
+                    return exec(`${bin} build -q ${env}`, (error, stdout, stderr) => {
+                        if (error) {
+                            console.error(`exec error: ${error}`)
+                            console.error(stderr);
+                        } else {
+                            console.log(stdout);
+                        }
 
                         if (browserSyncInstance) {
                             browserSyncInstance.reload();
@@ -101,7 +106,7 @@ class Jigsaw {
     }
 
     /**
-     * Get and instance of the ExtraWatchWebpackPlugin.
+     * Get an instance of the ExtraWatchWebpackPlugin.
      */
     watchPlugin() {
         return new ExtraWatchWebpackPlugin({
